@@ -54,7 +54,7 @@ export const createNote: RequestHandler<unknown, unknown, CreateNoteBody, unknow
 };
 
 interface UpdateNoteParams {
-  noteId: string,
+  noteId?: string,
 }
 
 interface UpdateNoteBody {
@@ -63,7 +63,7 @@ interface UpdateNoteBody {
 }
 
 export const updateNote: RequestHandler<UpdateNoteParams, unknown, UpdateNoteBody, unknown> = async (req, res, next) => {
-  const noteId = req.params;
+  const noteId = req.params.noteId;
   const newTitle = req.body.title;
   const newText = req.body.text;
   try {
@@ -82,9 +82,29 @@ export const updateNote: RequestHandler<UpdateNoteParams, unknown, UpdateNoteBod
     note.title = newTitle;
     note.text = newText;
 
-    const updatedNote = note.save();
+    const updatedNote = await note.save();
 
     res.status(200).json(updatedNote);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export const deleteNote: RequestHandler = async (req, res, next) => {
+  const noteId = req.params.noteId;
+  try {
+    if (!mongoose.isValidObjectId(noteId)) {
+      throw createHttpError(400, "Invalid note ID");
+    }
+
+    const note = await NoteModel.findById(noteId).exec();
+    if (!note) {
+      throw createHttpError(404, "Note not found");
+    }
+
+    // await note.remove();
+    await NoteModel.findByIdAndDelete(noteId);
+    res.sendStatus(204);
   } catch (error) {
     next(error);
   }
