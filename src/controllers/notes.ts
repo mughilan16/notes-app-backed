@@ -84,7 +84,7 @@ export const updateNote: RequestHandler<UpdateNoteParams, unknown, UpdateNoteBod
 
     const updatedNote = note.save();
 
-    res.status(200).json(updateNote);
+    res.status(200).json(updatedNote);
   } catch (error) {
     next(error);
   }
