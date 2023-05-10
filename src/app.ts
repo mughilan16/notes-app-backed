@@ -1,23 +1,30 @@
 import "dotenv/config";
 import express, { ErrorRequestHandler } from "express";
 import notesRoutes from "./routes/notes";
+import morgan from "morgan"
+import createHttpError, { isHttpError } from "http-errors";
 
 const app = express();
+
+app.use(morgan("dev"));
 
 app.use(express.json());
 
 app.use("/api/notes", notesRoutes);
 
 app.use((req, res, next) => {
-  next(Error("Endpoint not found"));
+  next(createHttpError(404, "Endpoint not found"));
 });
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
   console.log(error);
   let errorMessage = "An unknown error occurred";
-  if (error instanceof Error) errorMessage = error.message;
-  res.status(500).json({ error: errorMessage });
+  let status = 500;
+  if (isHttpError(error)) {
+    errorMessage = error.message;
+    status = error.status;
+  }
+  res.status(status).json({ error: errorMessage });
 };
 
 app.use(errorHandler);
